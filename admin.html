@@ -407,14 +407,31 @@
             }
         ];
 
+        // Debug flag - set to true to show debug logs
+        const DEBUG = true;
+        
+        function debugLog(message, data) {
+            if (DEBUG) {
+                console.log(`[DEBUG] ${message}`, data || '');
+            }
+        }
+
         // Load games from localStorage if available
         document.addEventListener('DOMContentLoaded', () => {
-            const savedGames = localStorage.getItem('games');
-            if (savedGames) {
-                games = JSON.parse(savedGames);
-            } else {
-                // Save initial games to localStorage
-                localStorage.setItem('games', JSON.stringify(games));
+            try {
+                debugLog('Đang tải dữ liệu từ localStorage...');
+                const savedGames = localStorage.getItem('games');
+                if (savedGames) {
+                    debugLog('Dữ liệu games đã tìm thấy:', savedGames);
+                    games = JSON.parse(savedGames);
+                } else {
+                    debugLog('Không tìm thấy dữ liệu games, đang lưu dữ liệu mẫu');
+                    // Save initial games to localStorage
+                    localStorage.setItem('games', JSON.stringify(games));
+                }
+            } catch (error) {
+                console.error('Lỗi khi truy cập localStorage:', error);
+                showAlert('Có lỗi xảy ra khi truy cập bộ nhớ cục bộ: ' + error.message, 'error');
             }
             
             displayGamesTable();
@@ -422,26 +439,32 @@
 
         // Display games in the admin table
         function displayGamesTable() {
-            const tableBody = document.getElementById('gamesTableBody');
-            tableBody.innerHTML = '';
-            
-            games.forEach(game => {
-                const row = document.createElement('tr');
+            try {
+                debugLog('Đang hiển thị bảng games với dữ liệu:', games);
+                const tableBody = document.getElementById('gamesTableBody');
+                tableBody.innerHTML = '';
                 
-                row.innerHTML = `
-                    <td>${game.id}</td>
-                    <td><img src="${game.image}" alt="${game.title}" class="game-list-img"></td>
-                    <td>${game.title}</td>
-                    <td>${formatPrice(game.price)} VND</td>
-                    <td>${game.categories.join(', ')}</td>
-                    <td class="action-buttons">
-                        <button class="btn btn-edit" onclick="openEditModal(${game.id})">Sửa</button>
-                        <button class="btn btn-delete" onclick="deleteGame(${game.id})">Xóa</button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
+                games.forEach(game => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${game.id}</td>
+                        <td><img src="${game.image}" alt="${game.title}" class="game-list-img" onerror="this.src='https://via.placeholder.com/80x45?text=Error'"></td>
+                        <td>${game.title}</td>
+                        <td>${formatPrice(game.price)} VND</td>
+                        <td>${game.categories.join(', ')}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-edit" onclick="openEditModal(${game.id})">Sửa</button>
+                            <button class="btn btn-delete" onclick="deleteGame(${game.id})">Xóa</button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Lỗi khi hiển thị bảng games:', error);
+                showAlert('Có lỗi xảy ra khi hiển thị danh sách game: ' + error.message, 'error');
+            }
         }
 
         // Format price with thousands separator
@@ -453,154 +476,266 @@
         document.getElementById('addGameForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
-            // Get form values
-            const title = document.getElementById('gameTitle').value.trim();
-            const price = parseInt(document.getElementById('gamePrice').value);
-            const image = document.getElementById('gameImage').value.trim();
-            
-            // Get selected categories
-            const categories = [];
-            document.querySelectorAll('.category-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
-                categories.push(checkbox.value);
-            });
-            
-            // Validate form
-            if (!title || !price || !image || categories.length === 0) {
-                showAlert('Vui lòng điền đầy đủ thông tin và chọn ít nhất một thể loại', 'error');
-                return;
-            }
-            
-            // Create new game object
-            const newGame = {
-                id: games.length > 0 ? Math.max(...games.map(g => g.id)) + 1 : 1,
-                title,
-                price,
-                image,
-                categories
-            };
-            
-            // Add to games array
-            games.push(newGame);
-            
-            // Save to localStorage
-            localStorage.setItem('games', JSON.stringify(games));
-            
-            // Update table
-            displayGamesTable();
-            
-            // Reset form
-            document.getElementById('addGameForm').reset();
-            
-            // Show success message
-            showAlert('Game đã được thêm thành công!', 'success');
-        });
-
-        // Delete game
-        function deleteGame(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa game này?')) {
-                games = games.filter(game => game.id !== id);
+            try {
+                debugLog('Form thêm game đã được submit');
+                
+                // Get form values
+                const title = document.getElementById('gameTitle').value.trim();
+                const price = parseInt(document.getElementById('gamePrice').value);
+                const image = document.getElementById('gameImage').value.trim();
+                
+                debugLog('Dữ liệu form:', { title, price, image });
+                
+                // Get selected categories
+                const categories = [];
+                document.querySelectorAll('#addGameForm .category-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                    categories.push(checkbox.value);
+                });
+                
+                debugLog('Thể loại đã chọn:', categories);
+                
+                // Validate form
+                if (!title || isNaN(price) || !image) {
+                    debugLog('Validation lỗi: thiếu thông tin cơ bản');
+                    showAlert('Vui lòng điền đầy đủ thông tin game', 'error');
+                    return;
+                }
+                
+                if (categories.length === 0) {
+                    debugLog('Validation lỗi: chưa chọn thể loại');
+                    showAlert('Vui lòng chọn ít nhất một thể loại', 'error');
+                    return;
+                }
+                
+                // Create new game object
+                const newId = games.length > 0 ? Math.max(...games.map(g => g.id)) + 1 : 1;
+                debugLog('ID mới tạo:', newId);
+                
+                const newGame = {
+                    id: newId,
+                    title,
+                    price,
+                    image,
+                    categories
+                };
+                
+                debugLog('Game mới tạo:', newGame);
+                
+                // Add to games array
+                games.push(newGame);
                 
                 // Save to localStorage
-                localStorage.setItem('games', JSON.stringify(games));
+                try {
+                    localStorage.setItem('games', JSON.stringify(games));
+                    debugLog('Đã lưu vào localStorage thành công');
+                } catch (storageError) {
+                    console.error('Lỗi khi lưu vào localStorage:', storageError);
+                    showAlert('Không thể lưu game vào bộ nhớ cục bộ: ' + storageError.message, 'error');
+                    return;
+                }
                 
                 // Update table
                 displayGamesTable();
                 
+                // Reset form
+                document.getElementById('addGameForm').reset();
+                
                 // Show success message
-                showAlert('Game đã được xóa thành công!', 'success');
+                showAlert('Game đã được thêm thành công!', 'success');
+                
+            } catch (error) {
+                console.error('Lỗi khi thêm game mới:', error);
+                showAlert('Có lỗi xảy ra khi thêm game mới: ' + error.message, 'error');
+            }
+        });
+
+        // Delete game
+        function deleteGame(id) {
+            try {
+                debugLog('Yêu cầu xóa game với ID:', id);
+                
+                if (confirm('Bạn có chắc chắn muốn xóa game này?')) {
+                    games = games.filter(game => game.id !== id);
+                    debugLog('Games sau khi xóa:', games);
+                    
+                    // Save to localStorage
+                    localStorage.setItem('games', JSON.stringify(games));
+                    debugLog('Đã lưu thay đổi sau khi xóa vào localStorage');
+                    
+                    // Update table
+                    displayGamesTable();
+                    
+                    // Show success message
+                    showAlert('Game đã được xóa thành công!', 'success');
+                } else {
+                    debugLog('Người dùng đã hủy xóa game');
+                }
+            } catch (error) {
+                console.error('Lỗi khi xóa game:', error);
+                showAlert('Có lỗi xảy ra khi xóa game: ' + error.message, 'error');
             }
         }
 
         // Open edit modal
         function openEditModal(id) {
-            const game = games.find(game => game.id === id);
-            if (!game) return;
-            
-            // Fill form with game data
-            document.getElementById('editGameId').value = game.id;
-            document.getElementById('editGameTitle').value = game.title;
-            document.getElementById('editGamePrice').value = game.price;
-            document.getElementById('editGameImage').value = game.image;
-            
-            // Reset checkboxes
-            document.querySelectorAll('#editModal input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            
-            // Check categories
-            game.categories.forEach(category => {
-                const checkbox = document.getElementById(`editCat${category.charAt(0).toUpperCase() + category.slice(1)}`);
-                if (checkbox) checkbox.checked = true;
-            });
-            
-            // Show modal
-            document.getElementById('editModal').classList.remove('hidden');
+            try {
+                debugLog('Mở modal chỉnh sửa cho game ID:', id);
+                
+                const game = games.find(game => game.id === id);
+                if (!game) {
+                    debugLog('Không tìm thấy game với ID:', id);
+                    showAlert('Không tìm thấy thông tin game cần chỉnh sửa', 'error');
+                    return;
+                }
+                
+                debugLog('Thông tin game sẽ chỉnh sửa:', game);
+                
+                // Fill form with game data
+                document.getElementById('editGameId').value = game.id;
+                document.getElementById('editGameTitle').value = game.title;
+                document.getElementById('editGamePrice').value = game.price;
+                document.getElementById('editGameImage').value = game.image;
+                
+                // Reset checkboxes
+                document.querySelectorAll('#editModal input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                // Check categories
+                game.categories.forEach(category => {
+                    const checkbox = document.getElementById(`editCat${category.charAt(0).toUpperCase() + category.slice(1)}`);
+                    if (checkbox) checkbox.checked = true;
+                });
+                
+                // Show modal
+                document.getElementById('editModal').classList.remove('hidden');
+                debugLog('Modal chỉnh sửa đã được hiển thị');
+                
+            } catch (error) {
+                console.error('Lỗi khi mở modal chỉnh sửa:', error);
+                showAlert('Có lỗi xảy ra khi mở form chỉnh sửa: ' + error.message, 'error');
+            }
         }
 
         // Close edit modal
         document.getElementById('cancelEditBtn').addEventListener('click', () => {
             document.getElementById('editModal').classList.add('hidden');
+            debugLog('Modal chỉnh sửa đã được đóng');
         });
 
         // Edit game
         document.getElementById('editGameForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
-            // Get form values
-            const id = parseInt(document.getElementById('editGameId').value);
-            const title = document.getElementById('editGameTitle').value.trim();
-            const price = parseInt(document.getElementById('editGamePrice').value);
-            const image = document.getElementById('editGameImage').value.trim();
-            
-            // Get selected categories
-            const categories = [];
-            document.querySelectorAll('#editModal .category-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
-                categories.push(checkbox.value);
-            });
-            
-            // Validate form
-            if (!title || !price || !image || categories.length === 0) {
-                showAlert('Vui lòng điền đầy đủ thông tin và chọn ít nhất một thể loại', 'error');
-                return;
+            try {
+                debugLog('Form chỉnh sửa game đã được submit');
+                
+                // Get form values
+                const id = parseInt(document.getElementById('editGameId').value);
+                const title = document.getElementById('editGameTitle').value.trim();
+                const price = parseInt(document.getElementById('editGamePrice').value);
+                const image = document.getElementById('editGameImage').value.trim();
+                
+                debugLog('Dữ liệu form chỉnh sửa:', { id, title, price, image });
+                
+                // Get selected categories
+                const categories = [];
+                document.querySelectorAll('#editModal .category-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                    categories.push(checkbox.value);
+                });
+                
+                debugLog('Thể loại đã chọn:', categories);
+                
+                // Validate form
+                if (!title || isNaN(price) || !image) {
+                    debugLog('Validation lỗi: thiếu thông tin cơ bản');
+                    showAlert('Vui lòng điền đầy đủ thông tin game', 'error');
+                    return;
+                }
+                
+                if (categories.length === 0) {
+                    debugLog('Validation lỗi: chưa chọn thể loại');
+                    showAlert('Vui lòng chọn ít nhất một thể loại', 'error');
+                    return;
+                }
+                
+                // Find game index
+                const gameIndex = games.findIndex(game => game.id === id);
+                if (gameIndex === -1) {
+                    debugLog('Không tìm thấy game cần chỉnh sửa với ID:', id);
+                    showAlert('Không tìm thấy thông tin game cần chỉnh sửa', 'error');
+                    return;
+                }
+                
+                // Update game
+                games[gameIndex] = {
+                    ...games[gameIndex],
+                    title,
+                    price,
+                    image,
+                    categories
+                };
+                
+                debugLog('Game sau khi cập nhật:', games[gameIndex]);
+                
+                // Save to localStorage
+                localStorage.setItem('games', JSON.stringify(games));
+                debugLog('Đã lưu thay đổi vào localStorage');
+                
+                // Update table
+                displayGamesTable();
+                
+                // Close modal
+                document.getElementById('editModal').classList.add('hidden');
+                
+                // Show success message
+                showAlert('Game đã được cập nhật thành công!', 'success');
+                
+            } catch (error) {
+                console.error('Lỗi khi chỉnh sửa game:', error);
+                showAlert('Có lỗi xảy ra khi chỉnh sửa game: ' + error.message, 'error');
             }
-            
-            // Find game index
-            const gameIndex = games.findIndex(game => game.id === id);
-            if (gameIndex === -1) return;
-            
-            // Update game
-            games[gameIndex] = {
-                ...games[gameIndex],
-                title,
-                price,
-                image,
-                categories
-            };
-            
-            // Save to localStorage
-            localStorage.setItem('games', JSON.stringify(games));
-            
-            // Update table
-            displayGamesTable();
-            
-            // Close modal
-            document.getElementById('editModal').classList.add('hidden');
-            
-            // Show success message
-            showAlert('Game đã được cập nhật thành công!', 'success');
         });
 
         // Show alert
         function showAlert(message, type) {
-            const alertBox = document.getElementById('alertBox');
-            alertBox.textContent = message;
-            alertBox.className = `alert alert-${type}`;
-            
-            // Hide alert after 3 seconds
-            setTimeout(() => {
-                alertBox.classList.add('hidden');
-            }, 3000);
+            try {
+                debugLog('Hiển thị thông báo:', { message, type });
+                
+                const alertBox = document.getElementById('alertBox');
+                alertBox.textContent = message;
+                alertBox.className = `alert alert-${type}`;
+                alertBox.classList.remove('hidden');
+                
+                // Hide alert after 3 seconds
+                setTimeout(() => {
+                    alertBox.classList.add('hidden');
+                    debugLog('Đã ẩn thông báo sau 3 giây');
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Lỗi khi hiển thị thông báo:', error);
+            }
         }
+
+        // Check localStorage support
+        function checkStorageSupport() {
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Check localStorage support on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!checkStorageSupport()) {
+                console.error('Trình duyệt không hỗ trợ localStorage hoặc đã bị vô hiệu hóa');
+                showAlert('Trình duyệt của bạn không hỗ trợ lưu trữ cục bộ, chức năng lưu game sẽ không hoạt động!', 'error');
+            }
+        });
     </script>
 </body>
 </html>
