@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Store</title>
+    <title>Admin Panel - Game Store</title>
     <style>
         :root {
             --primary-color: #6c5ce7;
@@ -12,7 +12,9 @@
             --darker-bg: #0f172a;
             --text-light: #f1f5f9;
             --card-bg: #2d3748;
-            --price-color: #a855f7;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
         }
 
         * {
@@ -37,185 +39,344 @@
             background-color: var(--dark-bg);
             padding: 15px 0;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
         }
 
-        .search-container {
-            max-width: 600px;
-            margin: 20px auto;
-            position: relative;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 12px 20px;
-            border-radius: 30px;
-            border: none;
-            background-color: #2a3547;
-            color: white;
-            font-size: 16px;
-        }
-
-        .search-input::placeholder {
-            color: #cbd5e1;
-        }
-
-        .category-filters {
+        .header-content {
             display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 20px 0;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .filter-btn {
-            padding: 8px 15px;
-            border-radius: 25px;
-            border: none;
+        .admin-title {
+            font-size: 24px;
+        }
+
+        .back-to-site {
+            color: var(--secondary-color);
+            text-decoration: none;
+            padding: 8px 16px;
+        }
+
+        .admin-section {
             background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="url"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #4b5563;
+            background-color: #1f2937;
             color: var(--text-light);
+        }
+
+        .category-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-group input {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
             cursor: pointer;
-            transition: all 0.3s ease;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
         }
 
-        .filter-btn.active {
+        .btn-primary {
             background-color: var(--primary-color);
+            color: white;
         }
 
-        .filter-btn:hover {
+        .btn-primary:hover {
             background-color: var(--secondary-color);
         }
 
-        .price-filter {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 20px 0;
-            gap: 10px;
-        }
-
-        .price-filter label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .price-filter input[type="checkbox"] {
-            margin-right: 8px;
-            width: 18px;
-            height: 18px;
-        }
-
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .game-card {
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .game-image {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-
-        .game-info {
-            padding: 15px;
-        }
-
-        .game-title {
-            font-size: 18px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .game-price {
-            font-size: 16px;
-            color: var(--price-color);
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .login-btn {
-            background-color: var(--primary-color);
+        .btn-danger {
+            background-color: var(--danger-color);
             color: white;
-            border: none;
-            padding: 8px 16px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #4b5563;
+        }
+
+        th {
+            background-color: #1f2937;
+        }
+
+        tr:hover {
+            background-color: #374151;
+        }
+
+        .game-list-img {
+            width: 80px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .alert {
+            padding: 10px 15px;
             border-radius: 5px;
-            cursor: pointer;
-            float: right;
-            margin-right: 20px;
+            margin-bottom: 20px;
         }
 
-        .admin-panel-link {
-            color: var(--secondary-color);
-            text-decoration: none;
-            float: right;
-            margin-right: 20px;
-            padding: 8px 16px;
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .games-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
         }
 
-        @media (max-width: 480px) {
-            .games-grid {
-                grid-template-columns: 1fr;
-            }
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <header>
         <div class="container">
-            <a href="admin.html" class="admin-panel-link">Admin Panel</a>
-            <button class="login-btn">Đăng nhập</button>
+            <div class="header-content">
+                <h1 class="admin-title">Admin Panel</h1>
+                <a href="index.html" class="back-to-site">← Quay lại trang web</a>
+            </div>
         </div>
     </header>
 
     <div class="container">
-        <div class="search-container">
-            <input type="text" class="search-input" placeholder="Tìm kiếm game..." id="searchInput">
+        <div id="alertBox" class="alert hidden"></div>
+
+        <div class="admin-section">
+            <h2 class="section-title">Thêm Game Mới</h2>
+            <form id="addGameForm">
+                <div class="form-group">
+                    <label for="gameTitle">Tên Game</label>
+                    <input type="text" id="gameTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="gamePrice">Giá (VND)</label>
+                    <input type="number" id="gamePrice" min="0" step="1000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="gameImage">Đường dẫn hình ảnh</label>
+                    <input type="url" id="gameImage" placeholder="https://example.com/image.jpg" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Thể loại</label>
+                    <div class="category-checkboxes">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="catHot" value="hot">
+                            <label for="catHot">Game Hot</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="catAction" value="action">
+                            <label for="catAction">Hành động</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="catRPG" value="rpg">
+                            <label for="catRPG">Nhập vai</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="catStrategy" value="strategy">
+                            <label for="catStrategy">Chiến thuật</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="catSport" value="sport">
+                            <label for="catSport">Thể thao</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="catBundle" value="bundle">
+                            <label for="catBundle">Bộ sưu tập</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="catOther" value="other">
+                            <label for="catOther">Khác</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Thêm Game</button>
+            </form>
         </div>
 
-        <div class="category-filters">
-            <button class="filter-btn active" data-category="all">Tất cả</button>
-            <button class="filter-btn" data-category="hot">Game Hot</button>
-            <button class="filter-btn" data-category="action">Hành động</button>
-            <button class="filter-btn" data-category="rpg">Nhập vai</button>
-            <button class="filter-btn" data-category="strategy">Chiến thuật</button>
-            <button class="filter-btn" data-category="sport">Thể thao</button>
-            <button class="filter-btn" data-category="other">Thể loại khác ▼</button>
+        <div class="admin-section">
+            <h2 class="section-title">Quản lý Game</h2>
+            <div class="table-wrapper">
+                <table id="gamesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Hình ảnh</th>
+                            <th>Tên Game</th>
+                            <th>Giá</th>
+                            <th>Thể loại</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gamesTableBody">
+                        <!-- Games will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
+    </div>
 
-        <div class="price-filter">
-            <label>
-                <input type="checkbox" id="priceFilter"> Áp dụng lọc giá
-            </label>
-        </div>
-
-        <div class="games-grid" id="gamesGrid">
-            <!-- Games will be dynamically loaded here -->
+    <!-- Edit Game Modal -->
+    <div id="editModal" class="hidden" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    ">
+        <div style="
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+        ">
+            <h2 class="section-title">Chỉnh sửa Game</h2>
+            <form id="editGameForm">
+                <input type="hidden" id="editGameId">
+                
+                <div class="form-group">
+                    <label for="editGameTitle">Tên Game</label>
+                    <input type="text" id="editGameTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editGamePrice">Giá (VND)</label>
+                    <input type="number" id="editGamePrice" min="0" step="1000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editGameImage">Đường dẫn hình ảnh</label>
+                    <input type="url" id="editGameImage" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Thể loại</label>
+                    <div class="category-checkboxes">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="editCatHot" value="hot">
+                            <label for="editCatHot">Game Hot</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="editCatAction" value="action">
+                            <label for="editCatAction">Hành động</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="editCatRPG" value="rpg">
+                            <label for="editCatRPG">Nhập vai</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="editCatStrategy" value="strategy">
+                            <label for="editCatStrategy">Chiến thuật</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="editCatSport" value="sport">
+                            <label for="editCatSport">Thể thao</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="editCatBundle" value="bundle">
+                            <label for="editCatBundle">Bộ sưu tập</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="editCatOther" value="other">
+                            <label for="editCatOther">Khác</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-danger" id="cancelEditBtn">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
         // Sample game data - in a real app this would come from a database
-        const games = [
+        let games = [
             {
                 id: 1,
                 title: "The First Berserker: Khazan",
@@ -243,126 +404,202 @@
                 price: 29000,
                 image: "https://via.placeholder.com/300x150?text=Spider-Man+Remastered",
                 categories: ["action"]
-            },
-            {
-                id: 5,
-                title: "Marvel's Spider-Man: Miles Morales",
-                price: 49000,
-                image: "https://via.placeholder.com/300x150?text=Miles+Morales",
-                categories: ["action", "hot"]
-            },
-            {
-                id: 6,
-                title: "3 Games Spiderman",
-                price: 99000,
-                image: "https://via.placeholder.com/300x150?text=3+Games+Spiderman",
-                categories: ["action", "bundle"]
-            },
-            {
-                id: 7,
-                title: "Grand Theft Auto V",
-                price: 29000,
-                image: "https://via.placeholder.com/300x150?text=GTA+V",
-                categories: ["action", "hot"]
-            },
-            {
-                id: 8,
-                title: "FIFA 24",
-                price: 39000,
-                image: "https://via.placeholder.com/300x150?text=FIFA+24",
-                categories: ["sport"]
             }
         ];
 
-        // Function to load games
-        function loadGames(filteredGames) {
-            const gamesGrid = document.getElementById('gamesGrid');
-            gamesGrid.innerHTML = '';
+        // Load games from localStorage if available
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedGames = localStorage.getItem('games');
+            if (savedGames) {
+                games = JSON.parse(savedGames);
+            } else {
+                // Save initial games to localStorage
+                localStorage.setItem('games', JSON.stringify(games));
+            }
             
-            // Use the filtered games if provided, otherwise use all games
-            const gamesToDisplay = filteredGames || games;
+            displayGamesTable();
+        });
+
+        // Display games in the admin table
+        function displayGamesTable() {
+            const tableBody = document.getElementById('gamesTableBody');
+            tableBody.innerHTML = '';
             
-            gamesToDisplay.forEach(game => {
-                const gameCard = document.createElement('div');
-                gameCard.className = 'game-card';
+            games.forEach(game => {
+                const row = document.createElement('tr');
                 
-                gameCard.innerHTML = `
-                    <img src="${game.image}" alt="${game.title}" class="game-image">
-                    <div class="game-info">
-                        <h3 class="game-title">${game.title}</h3>
-                        <p class="game-price">${formatPrice(game.price)} VND</p>
-                    </div>
+                row.innerHTML = `
+                    <td>${game.id}</td>
+                    <td><img src="${game.image}" alt="${game.title}" class="game-list-img"></td>
+                    <td>${game.title}</td>
+                    <td>${formatPrice(game.price)} VND</td>
+                    <td>${game.categories.join(', ')}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-edit" onclick="openEditModal(${game.id})">Sửa</button>
+                        <button class="btn btn-delete" onclick="deleteGame(${game.id})">Xóa</button>
+                    </td>
                 `;
                 
-                gamesGrid.appendChild(gameCard);
+                tableBody.appendChild(row);
             });
         }
 
-        // Function to format price with thousands separator
+        // Format price with thousands separator
         function formatPrice(price) {
             return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // Load games on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load games from localStorage if available
-            const savedGames = localStorage.getItem('games');
-            if (savedGames) {
-                games.length = 0; // Clear existing games
-                const parsedGames = JSON.parse(savedGames);
-                parsedGames.forEach(game => games.push(game));
+        // Add new game
+        document.getElementById('addGameForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Get form values
+            const title = document.getElementById('gameTitle').value.trim();
+            const price = parseInt(document.getElementById('gamePrice').value);
+            const image = document.getElementById('gameImage').value.trim();
+            
+            // Get selected categories
+            const categories = [];
+            document.querySelectorAll('.category-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                categories.push(checkbox.value);
+            });
+            
+            // Validate form
+            if (!title || !price || !image || categories.length === 0) {
+                showAlert('Vui lòng điền đầy đủ thông tin và chọn ít nhất một thể loại', 'error');
+                return;
             }
             
-            loadGames();
+            // Create new game object
+            const newGame = {
+                id: games.length > 0 ? Math.max(...games.map(g => g.id)) + 1 : 1,
+                title,
+                price,
+                image,
+                categories
+            };
             
-            // Set up filter buttons
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Remove active class from all buttons
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    // Add active class to clicked button
-                    button.classList.add('active');
-                    
-                    const category = button.getAttribute('data-category');
-                    filterGamesByCategory(category);
-                });
-            });
+            // Add to games array
+            games.push(newGame);
             
-            // Set up search
-            const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', () => {
-                const searchTerm = searchInput.value.toLowerCase();
-                filterGamesBySearch(searchTerm);
-            });
+            // Save to localStorage
+            localStorage.setItem('games', JSON.stringify(games));
+            
+            // Update table
+            displayGamesTable();
+            
+            // Reset form
+            document.getElementById('addGameForm').reset();
+            
+            // Show success message
+            showAlert('Game đã được thêm thành công!', 'success');
         });
 
-        // Function to filter games by category
-        function filterGamesByCategory(category) {
-            if (category === 'all') {
-                loadGames();
-                return;
+        // Delete game
+        function deleteGame(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa game này?')) {
+                games = games.filter(game => game.id !== id);
+                
+                // Save to localStorage
+                localStorage.setItem('games', JSON.stringify(games));
+                
+                // Update table
+                displayGamesTable();
+                
+                // Show success message
+                showAlert('Game đã được xóa thành công!', 'success');
             }
-            
-            const filteredGames = games.filter(game => 
-                game.categories.includes(category)
-            );
-            
-            loadGames(filteredGames);
         }
 
-        // Function to filter games by search term
-        function filterGamesBySearch(searchTerm) {
-            if (!searchTerm) {
-                loadGames();
+        // Open edit modal
+        function openEditModal(id) {
+            const game = games.find(game => game.id === id);
+            if (!game) return;
+            
+            // Fill form with game data
+            document.getElementById('editGameId').value = game.id;
+            document.getElementById('editGameTitle').value = game.title;
+            document.getElementById('editGamePrice').value = game.price;
+            document.getElementById('editGameImage').value = game.image;
+            
+            // Reset checkboxes
+            document.querySelectorAll('#editModal input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Check categories
+            game.categories.forEach(category => {
+                const checkbox = document.getElementById(`editCat${category.charAt(0).toUpperCase() + category.slice(1)}`);
+                if (checkbox) checkbox.checked = true;
+            });
+            
+            // Show modal
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        // Close edit modal
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            document.getElementById('editModal').classList.add('hidden');
+        });
+
+        // Edit game
+        document.getElementById('editGameForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Get form values
+            const id = parseInt(document.getElementById('editGameId').value);
+            const title = document.getElementById('editGameTitle').value.trim();
+            const price = parseInt(document.getElementById('editGamePrice').value);
+            const image = document.getElementById('editGameImage').value.trim();
+            
+            // Get selected categories
+            const categories = [];
+            document.querySelectorAll('#editModal .category-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                categories.push(checkbox.value);
+            });
+            
+            // Validate form
+            if (!title || !price || !image || categories.length === 0) {
+                showAlert('Vui lòng điền đầy đủ thông tin và chọn ít nhất một thể loại', 'error');
                 return;
             }
             
-            const filteredGames = games.filter(game => 
-                game.title.toLowerCase().includes(searchTerm)
-            );
+            // Find game index
+            const gameIndex = games.findIndex(game => game.id === id);
+            if (gameIndex === -1) return;
             
-            loadGames(filteredGames);
+            // Update game
+            games[gameIndex] = {
+                ...games[gameIndex],
+                title,
+                price,
+                image,
+                categories
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('games', JSON.stringify(games));
+            
+            // Update table
+            displayGamesTable();
+            
+            // Close modal
+            document.getElementById('editModal').classList.add('hidden');
+            
+            // Show success message
+            showAlert('Game đã được cập nhật thành công!', 'success');
+        });
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            
+            // Hide alert after 3 seconds
+            setTimeout(() => {
+                alertBox.classList.add('hidden');
+            }, 3000);
         }
     </script>
 </body>
