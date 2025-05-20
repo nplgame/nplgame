@@ -156,7 +156,7 @@
             background-color: var(--card-bg);
         }
 
-        #csvPreview {
+        #csvPreview, #textPreview {
             max-height: 300px;
             overflow-y: auto;
             background-color: var(--dark-bg);
@@ -239,12 +239,29 @@
             </form>
         </div>
 
+        <!-- ĐÃ ĐƯỢC CẬP NHẬT: Phần bulk import với chức năng danh sách text -->
         <div id="bulkImportTab" class="bulk-import-form" style="display:none;">
-            <div class="form-group">
-                <label for="csvFile">Tải Lên File CSV</label>
-                <input type="file" id="csvFile" class="form-control" accept=".csv">
+            <div class="tabs">
+                <div class="tab active" data-bulk-tab="csv">Nhập từ CSV</div>
+                <div class="tab" data-bulk-tab="text">Nhập từ Text</div>
             </div>
-            <div id="csvPreview"></div>
+            
+            <div id="csvImportSection">
+                <div class="form-group">
+                    <label for="csvFile">Tải Lên File CSV</label>
+                    <input type="file" id="csvFile" class="form-control" accept=".csv">
+                </div>
+                <div id="csvPreview"></div>
+            </div>
+            
+            <div id="textImportSection" style="display:none;">
+                <div class="form-group">
+                    <label for="gamesList">Danh sách game (mỗi dòng: tên game|giá tiền|link hình ảnh)</label>
+                    <textarea id="gamesListInput" class="form-control" rows="8" placeholder="The First Berserker: Khazan|49000|https://example.com/image.jpg"></textarea>
+                </div>
+                <div id="textPreview"></div>
+            </div>
+            
             <button id="importGamesBtn" class="btn btn-import" style="display:none;">Nhập Game Hàng Loạt</button>
         </div>
 
@@ -444,4 +461,184 @@
             gameForm.reset();
             gameIdInput.value = '';
             submitBtn.textContent = 'Thêm Game';
-            cancelEdit
+            cancelEditBtn.style.display = 'none';
+            gameForm.classList.remove('edit-mode');
+        });
+
+        // Call renderGamesList to initialize the list
+        renderGamesList();
+        
+        // =========== THÊM CODE MỚI CHO CHỨC NĂNG BULK IMPORT TEXT ==========
+        
+        // Additional variables for bulk text import
+        const bulkTabs = document.querySelectorAll('[data-bulk-tab]');
+        const csvImportSection = document.getElementById('csvImportSection');
+        const textImportSection = document.getElementById('textImportSection');
+        const gamesListInput = document.getElementById('gamesListInput');
+        const textPreview = document.getElementById('textPreview');
+        
+        let currentBulkMode = 'csv';
+        let parsedGames = [];
+        
+        // Switch between CSV and Text input in bulk import tab
+        bulkTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all bulk tabs
+                bulkTabs.forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                currentBulkMode = tab.dataset.bulkTab;
+                
+                // Show/hide corresponding sections
+                if (currentBulkMode === 'csv') {
+                    csvImportSection.style.display = 'block';
+                    textImportSection.style.display = 'none';
+                } else {
+                    csvImportSection.style.display = 'none';
+                    textImportSection.style.display = 'block';
+                }
+                
+                // Reset preview and button
+                csvPreview.innerHTML = '';
+                textPreview.innerHTML = '';
+                importGamesBtn.style.display = 'none';
+            });
+        });
+        
+        // Process text input for bulk import
+        gamesListInput.addEventListener('input', function() {
+            parsedGames = [];
+            const lines = this.value.trim().split('\n');
+            
+            if (lines.length === 0 || (lines.length === 1 && lines[0] === '')) {
+                textPreview.innerHTML = '';
+                importGamesBtn.style.display = 'none';
+                return;
+            }
+            
+            let tableHTML = '<table class="preview-table"><thead><tr><th>Tên Game</th><th>Giá (VND)</th><th>Hình Ảnh</th></tr></thead><tbody>';
+            let validLines = 0;
+            
+            lines.forEach((line, index) => {
+                const parts = line.split('|');
+                if (parts.length >= 2) {
+                    const title = parts[0].trim();
+                    const price = parseInt(parts[1].trim());
+                    const image = parts.length >= 3 ? parts[2].trim() : `https://via.placeholder.com/300x150?text=${encodeURIComponent(title)}`;
+                    
+                    if (title && !isNaN(price)) {
+                        validLines++;
+                        parsedGames.push({
+                            title,
+                            price,
+                            image,
+                            categories: ['other'] // Default category
+                        });
+                        
+                        tableHTML += `<tr>
+                            <td>${title}</td>
+                            <td>${formatPrice(price)} VND</td>
+                            <td>${image}</td>
+                        </tr>`;
+                    }
+                }
+            });
+            
+            tableHTML += '</tbody></table>';
+            
+            if (validLines > 0) {
+                textPreview.innerHTML = `<h3>Xem trước (${validLines} game):</h3>` + tableHTML;
+                importGamesBtn.style.display = 'inline-block';
+            } else {
+                textPreview.innerHTML = '<p>Không tìm thấy game hợp lệ. Vui lòng kiểm tra định dạng.</p>';
+                importGamesBtn.style.display = 'none';
+            }
+        });
+        
+        // Update the existing CSV file input handler
+        csvFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                Papa.parse(file, {
+                    header: true,
+                    complete: function(results) {
+                        parsedGames = [];
+                        const validGames = results.data.filter(row => row.title && row.price);
+                        
+                        if (validGames.length > 0) {
+                            let tableHTML = '<table class="preview-table"><thead><tr>';
+                            const headers = Object.keys(results.data[0]);
+                            headers.forEach(header => {
+                                tableHTML += `<th>${header}</th>`;
+                            });
+                            tableHTML += '</tr></thead><tbody>';
+                            
+                            validGames.forEach(game => {
+                                tableHTML += '<tr>';
+                                headers.forEach(header => {
+                                    tableHTML += `<td>${game[header] || ''}</td>`;
+                                });
+                                tableHTML += '</tr>';
+                                
+                                // Prepare game object for import
+                                parsedGames.push({
+                                    title: game.title,
+                                    price: parseInt(game.price),
+                                    image: game.image || `https://via.placeholder.com/300x150?text=${encodeURIComponent(game.title)}`,
+                                    categories: game.categories ? game.categories.split(',') : ['other']
+                                });
+                            });
+                            
+                            tableHTML += '</tbody></table>';
+                            csvPreview.innerHTML = `<h3>Xem trước (${validGames.length} game):</h3>` + tableHTML;
+                            importGamesBtn.style.display = 'inline-block';
+                        } else {
+                            csvPreview.innerHTML = '<p>Không tìm thấy game hợp lệ trong file CSV.</p>';
+                            importGamesBtn.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Import games button click handler
+        importGamesBtn.addEventListener('click', function() {
+            if (parsedGames.length === 0) {
+                alert('Không có game nào để nhập.');
+                return;
+            }
+            
+            // Get the highest existing ID
+            const highestId = games.length > 0 ? Math.max(...games.map(g => g.id)) : 0;
+            
+            // Add IDs to new games and add them to the games array
+            parsedGames.forEach((game, index) => {
+                game.id = highestId + index + 1;
+                games.push(game);
+            });
+            
+            // Save to localStorage
+            saveGamesToLocalStorage();
+            
+            // Render updated games list
+            renderGamesList();
+            
+            // Reset preview and form
+            if (currentBulkMode === 'csv') {
+                csvFileInput.value = '';
+                csvPreview.innerHTML = '';
+            } else {
+                gamesListInput.value = '';
+                textPreview.innerHTML = '';
+            }
+            
+            importGamesBtn.style.display = 'none';
+            
+            // Show success message
+            alert(`Đã thêm thành công ${parsedGames.length} game.`);
+            parsedGames = [];
+        });
+    </script>
+</body>
+</html>
