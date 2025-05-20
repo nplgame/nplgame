@@ -146,23 +146,9 @@
             text-align: center;
         }
 
-        .login-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            float: right;
-            margin-right: 20px;
-        }
-
+        .login-btn,
         .admin-panel-link {
-            color: var(--secondary-color);
-            text-decoration: none;
-            float: right;
-            margin-right: 20px;
-            padding: 8px 16px;
+            display: none;
         }
 
         /* Responsive adjustments */
@@ -214,7 +200,6 @@
     </div>
 
     <script>
-        // Sample game data - in a real app this would come from a database
         const games = [
             {
                 id: 1,
@@ -274,18 +259,16 @@
             }
         ];
 
-        // Function to load games
         function loadGames(filteredGames) {
             const gamesGrid = document.getElementById('gamesGrid');
             gamesGrid.innerHTML = '';
-            
-            // Use the filtered games if provided, otherwise use all games
+
             const gamesToDisplay = filteredGames || games;
-            
+
             gamesToDisplay.forEach(game => {
                 const gameCard = document.createElement('div');
                 gameCard.className = 'game-card';
-                
+
                 gameCard.innerHTML = `
                     <img src="${game.image}" alt="${game.title}" class="game-image">
                     <div class="game-info">
@@ -293,77 +276,25 @@
                         <p class="game-price">${formatPrice(game.price)} VND</p>
                     </div>
                 `;
-                
+
                 gamesGrid.appendChild(gameCard);
             });
         }
 
-        // Function to format price with thousands separator
         function formatPrice(price) {
             return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // Load games on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Load games from localStorage if available
             const savedGames = localStorage.getItem('games');
             if (savedGames) {
-                games.length = 0; // Clear existing games
+                games.length = 0;
                 const parsedGames = JSON.parse(savedGames);
                 parsedGames.forEach(game => games.push(game));
             }
-            
+
             loadGames();
-            
-            // Set up filter buttons
+
             const filterButtons = document.querySelectorAll('.filter-btn');
             filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Remove active class from all buttons
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    // Add active class to clicked button
-                    button.classList.add('active');
-                    
-                    const category = button.getAttribute('data-category');
-                    filterGamesByCategory(category);
-                });
-            });
-            
-            // Set up search
-            const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', () => {
-                const searchTerm = searchInput.value.toLowerCase();
-                filterGamesBySearch(searchTerm);
-            });
-        });
-
-        // Function to filter games by category
-        function filterGamesByCategory(category) {
-            if (category === 'all') {
-                loadGames();
-                return;
-            }
-            
-            const filteredGames = games.filter(game => 
-                game.categories.includes(category)
-            );
-            
-            loadGames(filteredGames);
-        }
-
-        // Function to filter games by search term
-        function filterGamesBySearch(searchTerm) {
-            if (!searchTerm) {
-                loadGames();
-                return;
-            }
-            
-            const filteredGames = games.filter(game => 
-                game.title.toLowerCase().includes(searchTerm)
-            );
-            
-            loadGames(filteredGames);
-        }
-    </script>
-</body>
-</html>
+                button.addEventListener
